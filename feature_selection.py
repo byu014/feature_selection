@@ -1,23 +1,31 @@
 import statistics
 import math
 #converts data in txt file to floats and stores in list
-def euclideanDistance(a,b,currentFeatures, potentialFeature):
-    total = 0
-    for feature in currentFeatures:
-        difference = b[feature] - a[feature]
+def euclideanDistance(a,b,currentFeatures, potentialFeature, mode):
+    if mode == 'add':
+        total = 0
+        for feature in currentFeatures:
+            difference = b[feature] - a[feature]
+            total += pow(difference,2)
+        difference = b[potentialFeature] - a[potentialFeature]
         total += pow(difference,2)
-    difference = b[potentialFeature] - a[potentialFeature]
-    total += pow(difference,2)
-    return math.sqrt(total)
+        return math.sqrt(total)
+    elif mode == 'remove':
+        total = 0
+        for feature in currentFeatures:
+            if feature != potentialFeature:
+                difference = b[feature] - a[feature]
+                total += pow(difference,2)
+        return math.sqrt(total)
 
-def leaveOneOutCrossValidation(data, currentFeatures, potentialFeature, dataClasses):
+def leaveOneOutCrossValidation(data, currentFeatures, potentialFeature, dataClasses, mode):
     numCorrect = 0
     for i in range(0, len(data)):
         bestSoFar = float("inf")
         bestSoFarLoc = 0
         for j in range(0, len(data)):
             if i != j:
-                distance = euclideanDistance(data[i],data[j],currentFeatures, potentialFeature)
+                distance = euclideanDistance(data[i],data[j],currentFeatures, potentialFeature, mode)
                 if distance < bestSoFar:
                     bestSoFar = distance
                     bestSoFarLoc = j
@@ -27,37 +35,42 @@ def leaveOneOutCrossValidation(data, currentFeatures, potentialFeature, dataClas
     accuracy = numCorrect/len(classList)
     return accuracy
 
-def printTestingSet(currentSetOfFeatures, k, accuracy):
+def printTestingSet(currentSetOfFeatures, k, accuracy, mode):
     featuresToPrint = ''
-    for feature in currentSetOfFeatures:
-        featuresToPrint += str(feature) + ','
-    print('Using feature(s) {', featuresToPrint, k,'} accuracy is ', round(accuracy * 100, 2),'%',sep = '')
+    if mode == 'add':
+        for feature in currentSetOfFeatures:
+            featuresToPrint += str(feature + 1) + ','
+        print('Using feature(s) {', featuresToPrint, k+1,'} accuracy is ', round(accuracy * 100, 2),'%',sep = '')
+    elif mode == 'remove':
+        for feature in currentSetOfFeatures:
+            if feature != k:
+                featuresToPrint += str(feature + 1) + ','
+        print('Using feature(s) {', featuresToPrint.strip(','),'} accuracy is ', round(accuracy * 100, 2),'%',sep = '')
 
 def printBestSetCurrently(currentSetOfFeatures, accuracy):
     featuresToPrint = ''
     for feature in currentSetOfFeatures:
-        featuresToPrint += str(feature) + ','
+        featuresToPrint += str(feature + 1) + ','
     print('Feature set {', featuresToPrint.strip(','),'} was best, accuracy is ', round(accuracy * 100, 2), '%',sep = '')
 
 def printBestFeatureSubset(bestSubsetAccuracyTuple):
     featuresToPrint = ''
     for feature in bestSubsetAccuracyTuple[0]:
-        featuresToPrint += str(feature) + ','
+        featuresToPrint += str(feature + 1) + ','
     print('Finished search!! The best feature subset is {', featuresToPrint.strip(','),'}, which has an accuracy of ', round(bestSubsetAccuracyTuple[1] * 100, 2), '%',sep = '')
 
 def forwardSelection(data, dataClasses):
     currentSetOfFeatures = []
     bestSubsetAccuracyTuple = ([],0)
+    
     for i in range(0,len(data[0])):
-        #print('On the ', i+1, 'th level of the search tree',sep = '')
         featureToAddAtThisLevel = 0
         bestSoFarAccuracy = 0
 
         for k in range(0, len(data[0])):
             if k not in currentSetOfFeatures:
-                print('--Considering adding the ', k, ' feature',sep = '')
-                accuracy = leaveOneOutCrossValidation(data, currentSetOfFeatures, k, dataClasses)
-                printTestingSet(currentSetOfFeatures, k, accuracy)
+                accuracy = leaveOneOutCrossValidation(data, currentSetOfFeatures, k, dataClasses, 'add')
+                printTestingSet(currentSetOfFeatures, k, accuracy, 'add')
                 if accuracy > bestSoFarAccuracy:
                     bestSoFarAccuracy = accuracy
                     featureToAddAtThisLevel = k
@@ -68,6 +81,30 @@ def forwardSelection(data, dataClasses):
             bestSubsetAccuracyTuple = (currentSetOfFeatures.copy(), bestSoFarAccuracy)
     
     printBestFeatureSubset(bestSubsetAccuracyTuple)
+
+def backwardElimination(data, dataClasses):
+    currentSetOfFeatures = [i for i in range(0, len(data[0]))]
+    bestSubsetAccuracyTuple = ([],0)
+    
+    for i in range(0,len(data[0])):
+        featureToRemoveAtThisLevel = 0
+        bestSoFarAccuracy = 0
+
+        for k in range(0, len(data[0])):
+            if k in currentSetOfFeatures:
+                accuracy = leaveOneOutCrossValidation(data, currentSetOfFeatures, k, dataClasses, 'remove')
+                printTestingSet(currentSetOfFeatures, k, accuracy, 'remove')
+                if accuracy > bestSoFarAccuracy:
+                    bestSoFarAccuracy = accuracy
+                    featureToRemoveAtThisLevel = k
+
+        currentSetOfFeatures.remove(featureToRemoveAtThisLevel)
+        printBestSetCurrently(currentSetOfFeatures,bestSoFarAccuracy)
+        if bestSoFarAccuracy > bestSubsetAccuracyTuple[1]:
+            bestSubsetAccuracyTuple = (currentSetOfFeatures.copy(), bestSoFarAccuracy)
+    
+    printBestFeatureSubset(bestSubsetAccuracyTuple)
+
 
 def txtToList(f):
     classList = []
@@ -128,9 +165,7 @@ featuresList = normalizeFeatures(featuresList)
 if userChoice == '1':
     forwardSelection(featuresList, classList)
 elif userChoice == '2':
-    #backwardElimination(featuresList, classList)
-    #TODO
-    pass
+    backwardElimination(featuresList, classList)
 elif userChoice == '3':
     #TODO
     pass
