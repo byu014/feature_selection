@@ -1,5 +1,6 @@
 import statistics
 import math
+import time
 #converts data in txt file to floats and stores in list
 def euclideanDistance(a,b,currentFeatures, potentialFeature, mode):
     if mode == 'add':
@@ -88,7 +89,7 @@ def forwardSelection(data, dataClasses, isSpecialAlg):
     
     printBestFeatureSubset(bestSubsetAccuracyTuple)
 
-def backwardElimination(data, dataClasses, isSPecialAlg):
+def backwardElimination(data, dataClasses, isSpecialAlg):
     currentSetOfFeatures = [i for i in range(0, len(data[0]))]
     bestSubsetAccuracyTuple = ([],0)
     
@@ -169,9 +170,17 @@ featuresList = normalizeFeatures(featuresList)
 
 
 if userChoice == '1':
+    startTime = time.time()
     forwardSelection(featuresList, classList, False)
+    endTime = time.time()
+    print('Forward Selection took %s seconds to run'%(endTime - startTime))
 elif userChoice == '2':
+    startTime = time.time()
     backwardElimination(featuresList, classList, False)
+    endTime = time.time()
+    print('Backward Elimination took %s seconds to run'%(endTime - startTime))
 elif userChoice == '3':
+    startTime = time.time()
     forwardSelection(featuresList, classList, True)
-    pass
+    endTime = time.time()
+    print('Custom algorithm took %s seconds to run'%(endTime - startTime))
