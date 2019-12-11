@@ -2,7 +2,8 @@ import statistics
 import math
 import time
 #converts data in txt file to floats and stores in list
-def euclideanDistance(a,b,currentFeatures, potentialFeature, mode):
+
+def euclideanDistance(a,b,currentFeatures, potentialFeature, mode, isSpecialAlg,i,j):
     if mode == 'add':
         total = 0
         for feature in currentFeatures:
@@ -18,6 +19,12 @@ def euclideanDistance(a,b,currentFeatures, potentialFeature, mode):
                 difference = b[feature] - a[feature]
                 total += pow(difference,2)
         return math.sqrt(total)
+    elif isSpecialAlg:
+        total = cachedMatrix[i][j]
+        difference = b[potentialFeature] - a[potentialFeature]
+        total += pow(difference,2)
+        potentialCachedMatrix[i][j] = total
+        return math.sqrt(total)
 
 def leaveOneOutCrossValidation(data, currentFeatures, potentialFeature, dataClasses, mode, bestSoFarAccuracy, isSpecialAlg):
     numCorrect = 0
@@ -27,7 +34,7 @@ def leaveOneOutCrossValidation(data, currentFeatures, potentialFeature, dataClas
         bestSoFarLoc = 0
         for j in range(0, len(data)):
             if i != j:
-                distance = euclideanDistance(data[i],data[j],currentFeatures, potentialFeature, mode)
+                distance = euclideanDistance(data[i],data[j],currentFeatures, potentialFeature, mode, isSpecialAlg,i,j)
                 if distance < bestSoFar:
                     bestSoFar = distance
                     bestSoFarLoc = j
@@ -81,6 +88,7 @@ def forwardSelection(data, dataClasses, isSpecialAlg):
                 if accuracy > bestSoFarAccuracy:
                     bestSoFarAccuracy = accuracy
                     featureToAddAtThisLevel = k
+                    cachedMatrix = potentialCachedMatrix
 
         currentSetOfFeatures.append(featureToAddAtThisLevel)
         printBestSetCurrently(currentSetOfFeatures,bestSoFarAccuracy)
@@ -96,10 +104,9 @@ def backwardElimination(data, dataClasses, isSpecialAlg):
     for i in range(0,len(data[0])):
         featureToRemoveAtThisLevel = 0
         bestSoFarAccuracy = 0
-
         for k in range(0, len(data[0])):
             if k in currentSetOfFeatures:
-                accuracy = leaveOneOutCrossValidation(data, currentSetOfFeatures, k, dataClasses, 'remove', bestSoFarAccuracy, isSpecialAlg)
+                accuracy, total = leaveOneOutCrossValidation(data, currentSetOfFeatures, k, dataClasses, 'remove', bestSoFarAccuracy, isSpecialAlg)
                 printTestingSet(currentSetOfFeatures, k, accuracy, 'remove')
                 if accuracy > bestSoFarAccuracy:
                     bestSoFarAccuracy = accuracy
@@ -168,7 +175,8 @@ print('This dataset has ' + str(len(featuresList[0])) + ' (not including the cla
 print('Please wait while I normalize the data...')
 featuresList = normalizeFeatures(featuresList)
 
-
+cachedMatrix = [[0 for i in range(len(featuresList[0]))] for j in range(len(classList))]
+potentialCachedMatrix = [[0 for i in range(len(featuresList[0]))] for j in range(len(classList))]
 if userChoice == '1':
     startTime = time.time()
     forwardSelection(featuresList, classList, False)
