@@ -18,8 +18,9 @@ def euclideanDistance(a,b,currentFeatures, potentialFeature, mode):
                 total += pow(difference,2)
         return math.sqrt(total)
 
-def leaveOneOutCrossValidation(data, currentFeatures, potentialFeature, dataClasses, mode):
+def leaveOneOutCrossValidation(data, currentFeatures, potentialFeature, dataClasses, mode, bestSoFarAccuracy, isSpecialAlg):
     numCorrect = 0
+    numWrong = 0
     for i in range(0, len(data)):
         bestSoFar = float("inf")
         bestSoFarLoc = 0
@@ -31,6 +32,11 @@ def leaveOneOutCrossValidation(data, currentFeatures, potentialFeature, dataClas
                     bestSoFarLoc = j
         if dataClasses[i] == dataClasses[bestSoFarLoc]:
             numCorrect += 1
+        else:
+            numWrong += 1
+        if isSpecialAlg:
+            if bestSoFarAccuracy > (len(classList) - numWrong)/len(classList):
+                return 0
     
     accuracy = numCorrect/len(classList)
     return accuracy
@@ -59,7 +65,7 @@ def printBestFeatureSubset(bestSubsetAccuracyTuple):
         featuresToPrint += str(feature + 1) + ','
     print('Finished search!! The best feature subset is {', featuresToPrint.strip(','),'}, which has an accuracy of ', round(bestSubsetAccuracyTuple[1] * 100, 2), '%',sep = '')
 
-def forwardSelection(data, dataClasses):
+def forwardSelection(data, dataClasses, isSpecialAlg):
     currentSetOfFeatures = []
     bestSubsetAccuracyTuple = ([],0)
     
@@ -69,7 +75,7 @@ def forwardSelection(data, dataClasses):
 
         for k in range(0, len(data[0])):
             if k not in currentSetOfFeatures:
-                accuracy = leaveOneOutCrossValidation(data, currentSetOfFeatures, k, dataClasses, 'add')
+                accuracy = leaveOneOutCrossValidation(data, currentSetOfFeatures, k, dataClasses, 'add', bestSoFarAccuracy, isSpecialAlg)
                 printTestingSet(currentSetOfFeatures, k, accuracy, 'add')
                 if accuracy > bestSoFarAccuracy:
                     bestSoFarAccuracy = accuracy
@@ -82,7 +88,7 @@ def forwardSelection(data, dataClasses):
     
     printBestFeatureSubset(bestSubsetAccuracyTuple)
 
-def backwardElimination(data, dataClasses):
+def backwardElimination(data, dataClasses, isSPecialAlg):
     currentSetOfFeatures = [i for i in range(0, len(data[0]))]
     bestSubsetAccuracyTuple = ([],0)
     
@@ -92,7 +98,7 @@ def backwardElimination(data, dataClasses):
 
         for k in range(0, len(data[0])):
             if k in currentSetOfFeatures:
-                accuracy = leaveOneOutCrossValidation(data, currentSetOfFeatures, k, dataClasses, 'remove')
+                accuracy = leaveOneOutCrossValidation(data, currentSetOfFeatures, k, dataClasses, 'remove', bestSoFarAccuracy, isSpecialAlg)
                 printTestingSet(currentSetOfFeatures, k, accuracy, 'remove')
                 if accuracy > bestSoFarAccuracy:
                     bestSoFarAccuracy = accuracy
@@ -163,9 +169,9 @@ featuresList = normalizeFeatures(featuresList)
 
 
 if userChoice == '1':
-    forwardSelection(featuresList, classList)
+    forwardSelection(featuresList, classList, False)
 elif userChoice == '2':
-    backwardElimination(featuresList, classList)
+    backwardElimination(featuresList, classList, False)
 elif userChoice == '3':
-    #TODO
+    forwardSelection(featuresList, classList, True)
     pass
