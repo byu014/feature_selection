@@ -42,9 +42,9 @@ def leaveOneOutCrossValidation(data, currentFeatures, potentialFeature, dataClas
             numCorrect += 1
         else:
             numWrong += 1
-        if isSpecialAlg:
-            if bestSoFarAccuracy > (len(classList) - numWrong)/len(classList):
-                return 0
+        #if isSpecialAlg:
+        if bestSoFarAccuracy > (len(classList) - numWrong)/len(classList):
+            return 0
     
     accuracy = numCorrect/len(classList)
     return accuracy
@@ -106,7 +106,7 @@ def backwardElimination(data, dataClasses, isSpecialAlg):
         bestSoFarAccuracy = 0
         for k in range(0, len(data[0])):
             if k in currentSetOfFeatures:
-                accuracy, total = leaveOneOutCrossValidation(data, currentSetOfFeatures, k, dataClasses, 'remove', bestSoFarAccuracy, isSpecialAlg)
+                accuracy = leaveOneOutCrossValidation(data, currentSetOfFeatures, k, dataClasses, 'remove', bestSoFarAccuracy, isSpecialAlg)
                 printTestingSet(currentSetOfFeatures, k, accuracy, 'remove')
                 if accuracy > bestSoFarAccuracy:
                     bestSoFarAccuracy = accuracy
